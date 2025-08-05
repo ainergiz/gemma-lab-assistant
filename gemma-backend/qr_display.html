@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi QR Code - Gemma Offline Pairing</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .qr-code {
+            margin: 20px 0;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            display: inline-block;
+            padding: 20px;
+            background: white;
+        }
+        .wifi-info {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .instructions {
+            background: #fff9e1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        .error, .health-warning {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .health-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+        .refresh-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background-color 0.2s;
+        }
+        .refresh-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Gemma Offline Wi-Fi Pairing</h1>
+        
+        <div id="health-warning" class="health-warning" style="display: none;">
+            <strong>Model Not Ready:</strong> The server is running, but the AI model is still loading or has encountered an error. QR code is valid for connection, but AI features will be unavailable.
+        </div>
+
+        <div id="loading">
+            <p>Loading QR code...</p>
+        </div>
+        
+        <div id="content" style="display: none;">
+            <div class="qr-code">
+                <!-- Patched Code: Improved image styling -->
+                <img id="qrImage" alt="Wi-Fi QR Code" style="width: 100%; max-width: 320px; height: auto; image-rendering: pixelated;">
+            </div>
+            
+            <div class="wifi-info">
+                <h3>📱 Wi-Fi Network Information</h3>
+                <p><strong>Network Name:</strong> <span id="ssid"></span></p>
+                <p><strong>Password:</strong> <span id="password"></span></p>
+                <p><strong>Server IP:</strong> <span id="hostIp"></span></p>
+                <p><strong>Server Port:</strong> <span id="serverPort"></span></p>
+            </div>
+            
+            <div class="instructions">
+                <h3>📋 Setup Instructions</h3>
+                
+                <div class="step">
+                    <strong>Step 1: Setup Hotspot</strong>
+                    <p>Run this command in your terminal:</p>
+                    <div id="hotspotInstructions"></div>
+                </div>
+                
+                <div class="step">
+                    <strong>Step 2: Start Server</strong>
+                     <p>If not already running, start the server in another terminal:</p>
+                    <code>uv run vlm_main.py</code>
+                </div>
+                
+                <div class="step">
+                    <strong>Step 3: Mobile App</strong>
+                    <ol>
+                        <li>Open the Gemma Mobile App.</li>
+                        <li>Go to Settings → Wi-Fi Pairing.</li>
+                        <li>Tap "Scan QR" and scan the code above.</li>
+                        <li>The app will automatically connect to the hotspot.</li>
+                        <li>Switch to Desktop mode for offline AI processing.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <div id="error" style="display: none;"></div>
+        
+        <button class="refresh-btn" onclick="loadQRCode()">🔄 Refresh QR Code</button>
+        
+        <p><small>Access this page at: <code>http://localhost:8000/qr_display.html</code></small></p>
+    </div>
+
+    <script>
+        // --- Patched Code: Added server health check ---
+        async function checkServerHealth() {
+            const healthWarning = document.getElementById('health-warning');
+            try {
+                const response = await fetch('/health');
+                if (!response.ok) {
+                    // Don't show a warning if the server is just down,
+                    // the main QR fetch will handle that.
+                    return; 
+                }
+                const healthData = await response.json();
+                if (healthData.status !== 'healthy') {
+                    healthWarning.style.display = 'block';
+                    healthWarning.innerHTML = `<strong>Server Degraded (${healthData.status}):</strong> ${healthData.services.vlm.last_error || 'The AI model is not fully loaded.'}`;
+                } else {
+                    healthWarning.style.display = 'none';
+                }
+            } catch (err) {
+                // Ignore fetch errors, as the main function will report them.
+                healthWarning.style.display = 'none';
+            }
+        }
+
+        async function loadQRCode() {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            const error = document.getElementById('error');
+            
+            loading.style.display = 'block';
+            content.style.display = 'none';
+            error.style.display = 'none';
+            
+            try {
+                const response = await fetch('/qrcode');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display QR code
+                const qrImage = document.getElementById('qrImage');
+                qrImage.src = `data:image/png;base64,${data.qr_code}`;
+                
+                // Display Wi-Fi info
+                document.getElementById('ssid').textContent = data.wifi_config.ssid;
+                document.getElementById('password').textContent = data.wifi_config.password;
+                document.getElementById('hostIp').textContent = data.wifi_config.host_ip;
+                document.getElementById('serverPort').textContent = data.wifi_config.server_port;
+                
+                // Display OS-specific hotspot instructions
+                const instructions = data.instructions;
+                const platform = navigator.platform.toLowerCase();
+                
+                let hotspotCmd = '';
+                if (platform.includes('win')) {
+                    hotspotCmd = instructions.windows;
+                } else if (platform.includes('mac')) {
+                    hotspotCmd = instructions.macos;
+                } else {
+                    hotspotCmd = instructions.linux;
+                }
+                
+                document.getElementById('hotspotInstructions').innerHTML = `<code>${hotspotCmd}</code>`;
+                
+                loading.style.display = 'none';
+                content.style.display = 'block';
+
+                // Now that main content is loaded, check the server's detailed health
+                checkServerHealth();
+                
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.innerHTML = `<div class="error">
+                    <strong>Error loading QR code:</strong> ${err.message}<br>
+                    <small>Please ensure the Gemma backend server is running at <code>http://localhost:8000</code> and try again.</small>
+                </div>`;
+            }
+        }
+        
+        // Load QR code when page loads
+        window.onload = loadQRCode;
+        
+        // Auto-refresh QR code and health status every 30 seconds
+        setInterval(() => {
+            loadQRCode();
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gemma Lab Assistant</string>
+    <string name="type_message">Type your message...</string>
+    <string name="send">Send</string>
+    <string name="download_model">Download Model</string>
+    <string name="model_downloading">Model downloading...</string>
+    <string name="model_ready">Model ready</string>
+    <string name="error_model_not_found">Model not found. Please download first.</string>
+    <string name="clear_message">Clear message</string>
+</resources>

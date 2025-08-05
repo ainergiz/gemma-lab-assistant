@@ -1,0 +1,60 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+build/
+captures/
+.gradle/
+local.properties
+
+# Gradle files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Signing files
+*.jks
+*.keystore
+
+# Android Studio/IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+*.log
+
+# Mac OS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Proguard
+proguard/
+proguard-rules.pro
+
+# Log files
+*.log
+
+# Crashlytics
+crashlytics-build.properties
+
+# NDK
+obj/
+
+# Misc
+*.swp
+*.swo
+
+.kotlin
