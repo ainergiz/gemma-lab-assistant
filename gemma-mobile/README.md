@@ -126,8 +126,3 @@ Android app for scientific laboratory assistance with dual AI inference: on-devi
 - **Playback Controls** - Tap audio messages to play/stop
 - **Persistence** - Audio messages saved and persist after responses
 - **Smart Cleanup** - Each audio message processed independently
-
-### Example Interactions
-```
-User: [uploads photo of a sunset]
-"What colors do you see in this image?"
