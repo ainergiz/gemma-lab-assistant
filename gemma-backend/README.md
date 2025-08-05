@@ -273,7 +273,6 @@ The server returns structured responses with performance metrics:
 
 ### Separation of Concerns
 - **VLM Server** (`vlm_main.py`) - Pure VLM functionality
-- **Hybrid Server** (`ollama/main.py`) - VLM + Ollama integration
 - **Modular Design** - Separate configs, models, and services
 
 ### Robustness Features
@@ -299,11 +298,6 @@ gemma-backend/
 ├── vlm_models.py        # VLM Pydantic models
 ├── vlm_service.py       # VLM business logic
 ├── vlm_routers.py       # VLM API endpoints
-└── ollama/              # Hybrid server files
-    ├── main.py
-    ├── config.py
-    ├── models.py
-    └── ...
 ```
 
 ### Key Improvements
